@@ -197,8 +197,8 @@ def detect_log_type(filepath):
 # ──────────────
 def main():
     parser = argparse.ArgumentParser(description="Analyse automatique de logs Linux et Windows.")
-    parser.add_argument("--file", required=True, help="Chemin vers le fichier log à analyser")
-    parser.add_argument("-o", "--output", choices=["json", "csv"], help="Format d’export des résultats (json ou csv, défaut : json)")
+    parser.add_argument("-f", "--file", required=True, help="Chemin vers le fichier log à analyser")
+    parser.add_argument("-o", "--output", choices=["json", "csv"], help="Format d’export des résultats (json ou csv")
     args = parser.parse_args()
 
     log_type = detect_log_type(args.file)
