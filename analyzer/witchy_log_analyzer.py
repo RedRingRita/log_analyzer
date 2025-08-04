@@ -4,12 +4,12 @@ import sys
 import re
 import xml.etree.ElementTree as ET
 
-from windows_rules import rules as windows_rules
-from linux_rules import rules as linux_rules
+from rules.windows_rules import rules as windows_rules
+from rules.linux_rules import rules as linux_rules
 from colorama import init, Fore, Style
 from comments import *
-from exporter_json import exporter_resultats_json
-from exporter_csv import exporter_resultats_csv 
+from exporter.exporter_json import exporter_resultats_json
+from exporter.exporter_csv import exporter_resultats_csv 
 
 init(autoreset=True)
 
