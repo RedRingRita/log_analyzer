@@ -32,4 +32,4 @@ options:
   -h, --help            show this help message and exit
   -f, --file FILE       Chemin vers le fichier log à analyser
   -o, --output {json,csv}
-                        Format d’export des résultats (json ou csv
+                        Format d’export des résultats (json ou csv)
