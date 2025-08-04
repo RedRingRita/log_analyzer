@@ -9,6 +9,7 @@ from linux_rules import rules as linux_rules
 from colorama import init, Fore, Style
 from comments import *
 from exporter_json import exporter_resultats_json
+from exporter_csv import exporter_resultats_csv 
 
 init(autoreset=True)
 
@@ -197,20 +198,23 @@ def detect_log_type(filepath):
 def main():
     parser = argparse.ArgumentParser(description="Analyse automatique de logs Linux et Windows.")
     parser.add_argument("--file", required=True, help="Chemin vers le fichier log à analyser")
+    parser.add_argument("-o", "--output", choices=["json", "csv"], help="Format d’export des résultats (json ou csv, défaut : json)")
     args = parser.parse_args()
 
     log_type = detect_log_type(args.file)
     
     if log_type == "linux":
-        # analyze_linux_log(args.file)
         resultats = analyze_linux_log(args.file)
-        exporter_resultats_json(resultats, "linux")
     elif log_type == "windows":
-        # analyze_windows_log(args.file)
         resultats = analyze_windows_log(args.file)
-        exporter_resultats_json(resultats, "windows")
     else:
         print("❌ Impossible de détecter le type de log ou format non supporté.")
+        return
+
+    if args.output == "json":
+        exporter_resultats_json(resultats, log_type)
+    elif args.output == "csv":
+        exporter_resultats_csv(resultats, log_type)
 
 if __name__ == "__main__":
     try:
