@@ -2,6 +2,9 @@ import argparse
 import os
 import sys
 import re
+import windows_rules
+
+from linux_rules import rules as linux_rules
 from colorama import init, Fore, Style
 
 init(autoreset=True)
@@ -45,15 +48,15 @@ def analyze_linux_log(filepath):
 
     with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
         for line in f:
-            if "Failed password" in line:
-                print_color(f"{Fore.RED}[ECHEC CONNEXION SSH]{Style.RESET_ALL} " + line.strip())
-                events_found = True
-            elif "Accepted password" in line:
-                print_color(f"{Fore.GREEN}[CONNEXION SSH REUSSIE]{Style.RESET_ALL} " + line.strip())
-                events_found = True
-            elif "sudo:" in line or "COMMAND=" in line:
-                print(f"{Fore.YELLOW}[UTILISATION DE SUDO / PRIVILEGE]{Style.RESET_ALL} " + line.strip())
-                events_found = True
+            for rule in linux_rules:
+                if rule["match"](line):
+                    label_colored = f"{rule['color']}{rule['label']}{Style.RESET_ALL}"
+                    if rule["show_line"]:
+                        print_color(f"{label_colored} {line.strip()}")
+                    else:
+                        print_color(label_colored)
+                    events_found = True
+                    break  # Si une règle matche, on ne teste pas les autres pour cette ligne
     
     if not events_found:
         print("Aucun événement notable détecté dans ce fichier.")
@@ -93,6 +96,11 @@ def analyze_windows_log(filepath):
                 # Connexion réussie (Event ID 4624)
                 elif "EventID>4624<" in xml_str:
                     print("[CONNEXION WINDOWS REUSSIE] Event ID 4624")
+                    events_found = True
+
+                # Connexion réussie (Event ID 4624)
+                elif "EventID>4634<" in xml_str:
+                    print("[DECONNEXION WINDOWS REUSSIE] Event ID 4634")
                     events_found = True
 
                 # Élévation de privilèges (Event ID 4672)
