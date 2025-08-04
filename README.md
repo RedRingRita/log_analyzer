@@ -20,3 +20,16 @@ cd log_analyzer/analyzer
 python -m venv venv
 source venv/bin/activate  # ou venv\Scripts\activate sous Windows
 pip install -r requirements.txt
+```
+
+---
+
+## 🚀 Utilisation
+
+witchy_log_analyzer.py [-h] -f FILE [-o {json,csv}]
+
+options:
+  -h, --help            show this help message and exit
+  -f, --file FILE       Chemin vers le fichier log à analyser
+  -o, --output {json,csv}
+                        Format d’export des résultats (json ou csv
