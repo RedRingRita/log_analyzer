@@ -8,8 +8,11 @@ from windows_rules import rules as windows_rules
 from linux_rules import rules as linux_rules
 from colorama import init, Fore, Style
 from comments import *
+from exporter_json import exporter_resultats_json
 
 init(autoreset=True)
+
+resultats = []  # Pour l'export final
 
 # Pour colorer les ip en bleu
 def print_color(line):
@@ -57,19 +60,51 @@ def analyze_linux_log(filepath):
                         print_color(f"{label_colored} {line.strip()}")
                     else:
                         print_color(label_colored)
+
+                    # Extraction précise selon le type de log
+                    try:
+                        timestamp = line[:15].strip()
+                        programme_match = re.search(r"(\w+)\[\d+\]:", line)
+                        programme = programme_match.group(1) if programme_match else "Inconnu"
+
+                        utilisateur = "-"
+                        if "Failed password for" in line or "Accepted password for" in line:
+                            match_user = re.search(r"(?:invalid user )?(\w+) from", line)
+                            utilisateur = match_user.group(1) if match_user else "-"
+                        elif "sudo:" in line:
+                            match_user = re.search(r"sudo:\s+(\w+)", line)
+                            utilisateur = match_user.group(1) if match_user else "-"
+                        elif "su:" in line:
+                            match_user = re.search(r"su:\s+(\w+)", line)
+                            utilisateur = match_user.group(1) if match_user else "-"
+
+                        resultats.append({
+                            "timestamp": timestamp,
+                            "programme": programme,
+                            "utilisateur": utilisateur,
+                            "description": rule["label"],
+                            "ligne_complete": line.strip()
+                        })
+
+                    except Exception as e:
+                        print(f"Erreur d'extraction : {e}")
+
                     events_found = True
-                    break  # Si une règle matche, on ne teste pas les autres pour cette ligne
+                    break  # Une règle a matché, on passe à la ligne suivante
     
     if not events_found:
         print("Aucun événement notable détecté dans ce fichier.")
     else:
         print("✅ Analyse Linux terminée avec succès.")
+    
+    return resultats
 
 # ──────────────────────────────────────
 # ANALYSE DE LOGS WINDOWS (fichiers .evtx)
 # ──────────────────────────────────────
 
 def analyze_windows_log(filepath):
+
     if Evtx is None:
         print("Erreur : impossible d'analyser les logs Windows sans le module python-evtx.")
         return
@@ -106,6 +141,16 @@ def analyze_windows_log(filepath):
                                 print(f"{rule['color']}{rule['label']}{Style.RESET_ALL}")
                                 if rule["show_line"]:
                                     print(f"[{timestamp}] Event ID {event_id} - {subject_username}@{domain} sur {computer_name} (Logon ID: {logon_id})")
+                                    resultats.append({
+                                        "event_id": event_id,
+                                        "description": rule['label'],
+                                        "utilisateur": subject_username,
+                                        "domaine": domain,
+                                        "ordinateur": computer_name,
+                                        "horodatage": timestamp,
+                                        "logon_id": logon_id
+                                    })
+
                                 events_found = True
                                 break
                 except ET.ParseError:
@@ -118,6 +163,8 @@ def analyze_windows_log(filepath):
 
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier EVTX : {e}")
+
+    return resultats
 
 
 # ─────────────────────
@@ -155,9 +202,13 @@ def main():
     log_type = detect_log_type(args.file)
     
     if log_type == "linux":
-        analyze_linux_log(args.file)
+        # analyze_linux_log(args.file)
+        resultats = analyze_linux_log(args.file)
+        exporter_resultats_json(resultats, "linux")
     elif log_type == "windows":
-        analyze_windows_log(args.file)
+        # analyze_windows_log(args.file)
+        resultats = analyze_windows_log(args.file)
+        exporter_resultats_json(resultats, "windows")
     else:
         print("❌ Impossible de détecter le type de log ou format non supporté.")
 
